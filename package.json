@@ -1,0 +1,21 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "nd": "npx tsc -b && nodemon dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/express": "^5.0.0",
+    "@types/mongoose": "^5.11.97",
+    "@types/ws": "^8.5.13",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.8.4",
+    "ws": "^8.18.0"
+  }
+}
