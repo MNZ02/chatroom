@@ -1,11 +1,16 @@
-import express from "express";
 import { createServer } from "http";
 import dotenv from "dotenv";
 import { WebSocketServer, WebSocket } from "ws";
+import app from "./app";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 dotenv.config();
 
-const app = express();
+interface decoded {
+  username: string;
+  password: string;
+}
+
 const PORT = process.env.PORT || 8080;
 
 const server = createServer(app);
@@ -36,12 +41,13 @@ const wss = new WebSocketServer({ server });
 //   });
 // });
 
-wss.on("connection", (ws) => {
-  ws.on("message", (message) => {
-    console.log(message.toString());
+wss.on("connection", (ws, req) => {
+  const token = req.headers["sec-websocket-protocol"];
 
-    broadcast(message.toString());
-  });
+  if (!token) {
+    ws.close(1008, "Authentication required");
+    return;
+  }
 
   function broadcast(msg: any) {
     for (const client of wss.clients) {
@@ -50,7 +56,26 @@ wss.on("connection", (ws) => {
       }
     }
   }
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_KEY as string);
+
+    console.log("Authenticated user", decoded);
+
+    (ws as any).user = decoded;
+
+    ws.on("message", (message) => {
+      console.log(`${(decoded as decoded).username}: ${message}`);
+
+      broadcast(message.toString());
+    });
+  } catch (error) {
+    ws.close(1008, "Invalid token");
+  }
 });
-server.listen(PORT, () => {
-  console.log(`Server is running on ws://localhost:${PORT}`);
+
+app.listen(PORT, () => {
+  console.log("Http server running on http://localhost:" + PORT);
+});
+server.listen(8080, () => {
+  console.log(`WSS is running on ws://localhost:${8080}`);
 });
