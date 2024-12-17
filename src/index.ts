@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { WebSocketServer, WebSocket } from "ws";
 import app from "./app";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { uuid } from "uuidv4";
 
 dotenv.config();
 
@@ -56,6 +57,10 @@ wss.on("connection", (ws, req) => {
       }
     }
   }
+
+  (ws as any).id = uuid();
+  console.log("Assigned id " + (ws as any).id);
+
   try {
     const decoded = jwt.verify(token, process.env.SECRET_KEY as string);
 
