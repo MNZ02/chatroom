@@ -50,13 +50,19 @@ wss.on("connection", (ws, req) => {
     return;
   }
 
-  function broadcast(msg: any) {
-    for (const client of wss.clients) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(msg);
-      }
-    }
-  }
+  //create a map to store user connections
+  const userConnections = new Map<
+    string,
+    { socket: WebSocket; room: string | null }
+  >();
+  const rooms = new Map<string, Set<string>>();
+  // function broadcast(msg: any) {
+  //   for (const client of wss.clients) {
+  //     if (client.readyState === WebSocket.OPEN) {
+  //       client.send(msg);
+  //     }
+  //   }
+  // }
 
   (ws as any).id = uuid();
   console.log("Assigned id " + (ws as any).id);
@@ -68,10 +74,76 @@ wss.on("connection", (ws, req) => {
 
     (ws as any).user = decoded;
 
-    ws.on("message", (message) => {
-      console.log(`${(decoded as decoded).username}: ${message}`);
+    userConnections.set((decoded as decoded).username, {
+      socket: ws,
+      room: null,
+    });
 
-      broadcast(message.toString());
+    ws.on("message", (data) => {
+      console.log(`${(decoded as decoded).username}: ${data}`);
+      try {
+        const { type, room, message, recepient } = JSON.parse(data.toString());
+
+        const userId = (ws as any).id;
+        if (!recepient || !message) {
+          ws.send(
+            JSON.stringify({ error: "Recipient and message are required." })
+          );
+          console.log(
+            "Invalid message format. Must include recipient and message."
+          );
+          return;
+        }
+
+        if (type === "join_room") {
+          if (!rooms.has(room)) {
+            rooms.set(room, new Set());
+          }
+        }
+        rooms.get(room)?.add(userId);
+        // broadcastToRoom(room, userId);
+        console.log(`${userId} joined room ${room}`);
+        const recipientConnection = userConnections.get(recepient);
+        if (!recipientConnection) {
+          ws.send(JSON.stringify({ error: "Recipient not found." }));
+          return;
+        }
+
+        const recipientSocket = recipientConnection.socket;
+
+        if (recipientSocket.readyState === WebSocket.OPEN) {
+          recipientSocket.send(
+            JSON.stringify({ sender: (decoded as decoded).username, message })
+          );
+          broadcastToRoom(room, message, userId);
+        }
+      } catch (error) {
+        console.error("Failed to process message", error);
+        ws.send(JSON.stringify({ error: "Invalid message format." }));
+      }
+      ws.on("close", () => {
+        console.log("Recepient disconnected");
+        userConnections.delete((decoded as decoded).username);
+      });
+      // broadcast(message.toString());
+      function broadcastToRoom(
+        room: string,
+        message: string,
+        senderId: string
+      ) {
+        const participants = rooms.get(room);
+        if (!participants) return;
+
+        for (const participationId of participants) {
+          const client = Array.from(wss.clients).find(
+            (ws) => (ws as any).id === participationId
+          );
+
+          if (client && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ sender: senderId, message }));
+          }
+        }
+      }
     });
   } catch (error) {
     ws.close(1008, "Invalid token");
