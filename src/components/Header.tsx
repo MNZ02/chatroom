@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   user: {
@@ -21,8 +22,11 @@ interface HeaderProps {
 function Header({ user }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const navigate = useNavigate();
+
   const handleLogout = () => {
-    console.log("Logging out...");
+    localStorage.removeItem("token");
+    navigate("/");
   };
 
   return (
@@ -54,7 +58,7 @@ function Header({ user }: HeaderProps) {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
+              <span onClick={handleLogout}>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
