@@ -3,14 +3,15 @@ import User from "../models/User";
 
 export async function getAllUsers(req: Request, res: Response) {
   try {
-    const currentUserId = req.userId;
+    const currentUser = req.user;
+    console.log({ currentUser });
 
-    if (!currentUserId) {
+    if (!currentUser) {
       res.status(404).json({ message: "User not authenticated" });
     }
     const users = await User.find({
-      _id: {
-        $ne: { currentUserId },
+      username: {
+        $ne: currentUser ,
       },
     });
     if (users.length == 0) {
