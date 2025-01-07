@@ -1,8 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface User {
-  id: number;
-  name: string;
+  username: string;
   avatar: string;
 }
 
@@ -15,12 +14,15 @@ function UserList({ users }: UserListProps) {
       <h2 className="text-xl font-bold mb-4">Users</h2>
       <ul>
         {users.map((user) => (
-          <li key={user.id} className="flex items-center space-x-3 mb-3">
+          <li
+            key={user.username}
+            className="flex items-center space-x-3 mb-3 cursor-pointer hover:bg-gray-200 p-2"
+          >
             <Avatar>
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>{user.name[0]}</AvatarFallback>
+              <AvatarImage src={user.avatar} alt={user.username} />
+              <AvatarFallback>{user.username[0]}</AvatarFallback>
             </Avatar>
-            <span>{user.name}</span>
+            <span>{user.username}</span>
           </li>
         ))}
       </ul>

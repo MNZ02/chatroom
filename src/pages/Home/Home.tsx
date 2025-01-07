@@ -1,13 +1,21 @@
 import UserList from "@/components/UserList";
 import ChatArea from "@/components/ChatArea";
 import Header from "@/components/Header";
+import { getAllUsers } from "@/hooks/useGetallusers";
+import { useEffect, useState } from "react";
 
 function Home() {
-  const users = [
-    { id: 1, name: "Alice", avatar: "/placeholder.svg?height=40&width=40" },
-    { id: 2, name: "Bob", avatar: "/placeholder.svg?height=40&width=40" },
-    { id: 3, name: "Charlie", avatar: "/placeholder.svg?height=40&width=40" },
-  ];
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      const data = await getAllUsers();
+      setUsers(data?.users);
+      setLoading(false);
+    };
+    fetchUsers();
+  }, []);
 
   const messages = [
     { id: 1, userId: 1, text: "Hey everyone!", timestamp: "2:30 PM" },
@@ -24,7 +32,7 @@ function Home() {
     <div className="flex flex-col h-screen bg-gray-100">
       <Header user={currentUser} />
       <div className="flex flex-1 overflow-hidden">
-        <UserList users={users} />
+        {loading ? <div>Loading</div> : <UserList users={users} />}
         <ChatArea messages={messages} users={users} />
       </div>
     </div>
